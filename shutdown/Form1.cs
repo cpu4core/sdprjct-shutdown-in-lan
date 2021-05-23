@@ -167,7 +167,7 @@ namespace shutdown
                     string message =  "Cancelled !!";
                     string title = Application.ProductName;
                     MessageBoxButtons buttons = MessageBoxButtons.OK;
-                   MessageBox.Show(message, title, buttons, MessageBoxIcon.Error);
+                    MessageBox.Show(message, title, buttons, MessageBoxIcon.Error);
 
                     e.Cancel = true;
                     return;
@@ -189,7 +189,11 @@ namespace shutdown
                     }
                 }
             }
-            MessageBox.Show("find success");
+
+            string messages = "Find Success !!";
+            string titles = Application.ProductName;
+            MessageBoxButtons buttonss = MessageBoxButtons.OK;
+            MessageBox.Show(messages, titles, buttonss, MessageBoxIcon.Information);
         }
     }
 }
