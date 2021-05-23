@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Net;
 using System.Windows.Forms;
 using System.Net.Sockets;
+using System.Net.NetworkInformation;
 
 //using System.Collections;
 //using System.Collections.Generic;
@@ -83,6 +84,7 @@ namespace shutdown
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            backgroundWorker1.WorkerSupportsCancellation = true;
             CheckForIllegalCrossThreadCalls = false;
             this.Listeners.Start();
             System.Threading.ThreadPool.QueueUserWorkItem(ReceiveAndSend);
@@ -90,14 +92,45 @@ namespace shutdown
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            ipPrefix = textBox1.Text.Trim();
-            backgroundWorker1.RunWorkerAsync();
+            ipPrefix = txtPrefixIP.Text.Trim();
         }
 
 
         private void button1_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void btnScan_Click(object sender, EventArgs e)
+        {
+            this.progressBar1.Minimum = int.Parse(this.txtStartIP.Text);
+            this.progressBar1.Maximum = int.Parse(this.txtEndIP.Text);
+            if (this.btnScan.Text == "scan")
+            {
+                this.btnScan.Text = "STOP !!";
+                backgroundWorker1.RunWorkerAsync();
+            }
+            else
+            {
+                this.btnScan.Text = "scan";
+                backgroundWorker1.CancelAsync();
+            }
+        }
+
+        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled == true)
+            {
+                this.btnScan.Text = "scan";
+            }
+            else if (e.Error != null)
+            {
+                this.btnScan.Text = "scan";
+            }
+            else
+            {
+                this.btnScan.Text = "scan";
+            }
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -125,11 +158,26 @@ namespace shutdown
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            for (int ipMachine = 1; ipMachine < 17; ipMachine++)
+            for (int ipMachine = int.Parse(this.txtStartIP.Text); ipMachine <= int.Parse(this.txtEndIP.Text); ipMachine++)
             {
-                //if (ipMachine == 7 || ipMachine == 16)
-                //{
-                    ipCom = Convert.ToString(ipMachine);
+                if (backgroundWorker1.CancellationPending == true)
+                {
+                    this.progressBar1.Value = int.Parse(this.txtEndIP.Text);
+
+                    string message =  "Cancelled !!";
+                    string title = Application.ProductName;
+                    MessageBoxButtons buttons = MessageBoxButtons.OK;
+                   MessageBox.Show(message, title, buttons, MessageBoxIcon.Error);
+
+                    e.Cancel = true;
+                    return;
+                }
+                this.progressBar1.Value = ipMachine;
+                ipCom = Convert.ToString(ipMachine);
+                Ping myPing = new Ping();
+                PingReply reply = myPing.Send(ipPrefix + "." + ipCom, 1000);
+                if (reply.Status.ToString() == "Success")
+                {
                     comname = ScanComputers(ipPrefix + "." + ipCom);
                     if (comname != "")
                     {
@@ -139,9 +187,9 @@ namespace shutdown
                         dataGridView1.Rows[rowindex].Cells[1].Value = comname;
                         dataGridView1.Rows[rowindex].Cells[2].Value = "SHUT DOWN";
                     }
-                //}
+                }
             }
-            MessageBox.Show("find all");
+            MessageBox.Show("find success");
         }
     }
 }
